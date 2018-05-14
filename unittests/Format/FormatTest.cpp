@@ -5493,6 +5493,11 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
                "public:\n"
                "  E *f();\n"
                "};");
+  verifyFormat("template <typename T>\nvoid f() &;", AlwaysBreak);
+  verifyFormat("template <typename T>\nvoid f() &noexcept;", AlwaysBreak);
+  verifyFormat("template <typename T>\nvoid f() & {}", AlwaysBreak);
+  verifyFormat("template <typename T>\nvoid f() &noexcept {}", AlwaysBreak);
+  verifyFormat("template <typename T>\nauto operator+() &THROW {}", AlwaysBreak);
 }
 
 TEST_F(FormatTest, WrapsTemplateParameters) {
@@ -6079,6 +6084,8 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
                "operator()() && {}");
   verifyGoogleFormat("template <typename T>\n"
                      "auto x() & -> int {}");
+  verifyGoogleFormat("template <typename T>\n"
+                     "auto x() const& noexcept -> bool {}");
 }
 
 TEST_F(FormatTest, UnderstandsAttributes) {

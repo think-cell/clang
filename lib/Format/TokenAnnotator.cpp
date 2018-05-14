@@ -1557,7 +1557,7 @@ private:
         (NextToken->is(tok::l_brace) && !NextToken->getNextNonComment()))
       return TT_PointerOrReference;
 
-    if (PrevToken->is(tok::coloncolon))
+    if (PrevToken->isOneOf(tok::coloncolon, tok::kw_const))
       return TT_PointerOrReference;
 
     if (PrevToken->isOneOf(tok::l_paren, tok::l_square, tok::l_brace,
@@ -1579,7 +1579,9 @@ private:
       FormatToken *TokenBeforeMatchingParen =
           PrevToken->MatchingParen->getPreviousNonComment();
       if (TokenBeforeMatchingParen &&
-          TokenBeforeMatchingParen->isOneOf(tok::kw_typeof, tok::kw_decltype))
+          TokenBeforeMatchingParen->isOneOf(
+              tok::kw_typeof, tok::kw_decltype, TT_FunctionDeclarationName,
+              TT_StartOfName, TT_OverloadedOperator))
         return TT_PointerOrReference;
     }
 
