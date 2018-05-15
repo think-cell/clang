@@ -936,8 +936,9 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
                     State.Stack.back().Indent + Style.ContinuationIndentWidth);
 
   if (NextNonComment->is(tok::l_brace) && NextNonComment->BlockKind == BK_Block)
-    return Current.NestingLevel == 0 ? State.FirstIndent
-                                     : State.Stack.back().Indent;
+    return Current.NestingLevel == 0 && State.Stack.back().QuestionColumn == 0
+        ? State.FirstIndent
+        : State.Stack.back().Indent;
   if ((Current.isOneOf(tok::r_brace, tok::r_square) ||
        (Current.is(tok::greater) &&
         (Style.Language == FormatStyle::LK_Proto ||

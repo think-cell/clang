@@ -11336,6 +11336,17 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     ").element_base();\n",
     Style);
 
+  verifyFormat(
+    "aaaaaa = aaaaaaaaaaaa\n"
+    "	?\n"
+    "	[&]() noexcept {\n"
+    "		return true;\n"
+    "	}()\n"
+    "		? aaaaaaaaaaaa\n"
+    "		: aaaaaaaaaaaaaaaaaaa\n"
+    "	: aaaaaaaaaaaaaaaaaaaaaaaaaaaa;\n",
+    Style);
+
   Style.ColumnLimit = 15;
   verifyFormat(
     "if (\n"
