@@ -483,7 +483,8 @@ struct FormatToken {
            is(TT_ProtoExtensionLSquare) ||
            (is(tok::l_brace) &&
             (BlockKind == BK_Block || is(TT_DictLiteral) ||
-             (!Style.Cpp11BracedListStyle && NestingLevel == 0))) ||
+             (!Style.Cpp11BracedListStyle &&
+              (NestingLevel == 0 || Style.UseThinkCellStyle)))) ||
            (is(tok::less) && (Style.Language == FormatStyle::LK_Proto ||
                               Style.Language == FormatStyle::LK_TextProto));
   }

@@ -11437,6 +11437,32 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     "		>;\n"
     "};\n",
     Style);
+
+  verifyFormat(
+    "return {\n"
+    "	max(\n"
+    "		aaaa,\n"
+    "		aaa\n"
+    "	),\n"
+    "	{ 10, 4 }\n"
+    "};\n",
+    Style);
+
+  verifyFormat(
+    "return {\n"
+    "	max(\n"
+    "		aaaa,\n"
+    "		aaa\n"
+    "	),\n"
+    "	{\n"
+    "		max(\n"
+    "			aaaa,\n"
+    "			aaa\n"
+    "		),\n"
+    "		10\n"
+    "	}\n"
+    "};\n",
+    Style);
 }
 
 TEST_F(FormatTest, FormatsLambdas) {

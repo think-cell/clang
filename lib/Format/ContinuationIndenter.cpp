@@ -283,9 +283,9 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
     return false;
   // The opening "{" of a braced list has to be on the same line as the first
   // element if it is nested in another braced init list or function call.
-  if (!Current.MustBreakBefore && Previous.is(tok::l_brace) &&
-      Previous.isNot(TT_DictLiteral) && Previous.BlockKind == BK_BracedInit &&
-      Previous.Previous &&
+  if (!Style.UseThinkCellStyle && !Current.MustBreakBefore &&
+      Previous.is(tok::l_brace) && Previous.isNot(TT_DictLiteral) &&
+      Previous.BlockKind == BK_BracedInit && Previous.Previous &&
       Previous.Previous->isOneOf(tok::l_brace, tok::l_paren, tok::comma))
     return false;
   // This prevents breaks like:
@@ -336,7 +336,7 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
 
   // Don't break before '{' if this line's last space is correct
   if (Style.UseThinkCellStyle && NewLineColumn >= State.LastSpace &&
-      Current.is(tok::l_brace))
+      Current.is(tok::l_brace) && Current.BlockKind != BK_BracedInit)
     return false;
 
   return !State.Stack.back().NoLineBreak;
@@ -622,7 +622,9 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
   // disallowing any further line breaks if there is no line break after the
   // opening parenthesis. Don't break if it doesn't conserve columns.
   if (Style.AlignAfterOpenBracket == FormatStyle::BAS_AlwaysBreak &&
-      Previous.isOneOf(tok::l_paren, TT_TemplateOpener, tok::l_square) &&
+      (Previous.isOneOf(tok::l_paren, TT_TemplateOpener, tok::l_square) ||
+       Previous.is(tok::l_brace) && Previous.BlockKind == BK_BracedInit &&
+           Style.UseThinkCellStyle) &&
       (Style.UseThinkCellStyle ||
        (State.Column > getNewLineColumn(State) &&
         (!Previous.Previous ||
