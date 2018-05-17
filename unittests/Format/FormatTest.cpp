@@ -11411,22 +11411,20 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     "struct transform_return\n"
     "	final\n"
     "{\n"
-    "	static constexpr bool\n"
-    "		bDecay = std::conditional_t<\n"
-    "			!std::conjunction<\n"
-    "				std::is_reference<\n"
-    "					SourceExpr\n"
-    "				>...\n"
-    "			>::value\n"
-    "				&& std::is_rvalue_reference<\n"
-    "					TargetExpr\n"
-    "				>::value,\n"
-    "			delayed_returns_reference_to_argument<\n"
-    "				Func\n"
-    "			>,\n"
-    "			std::false_type\n"
-    "		>::type::\n"
-    "			value;\n"
+    "	static constexpr bool bDecay = std::conditional_t<\n"
+    "		!std::conjunction<\n"
+    "			std::is_reference<\n"
+    "				SourceExpr\n"
+    "			>...\n"
+    "		>::value\n"
+    "			&& std::is_rvalue_reference<\n"
+    "				TargetExpr\n"
+    "			>::value,\n"
+    "		delayed_returns_reference_to_argument<\n"
+    "			Func\n"
+    "		>,\n"
+    "		std::false_type\n"
+    "	>::type::value;\n"
     "	using type =\n"
     "		std::conditional_t<\n"
     "			bDecay,\n"
@@ -11462,6 +11460,11 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     "		10\n"
     "	}\n"
     "};\n",
+    Style);
+
+  verifyFormat(
+    "Aaaaaaaaaaaa\n"
+    "	aaaaaaaaaaaaaa::bbbb;\n",
     Style);
 }
 

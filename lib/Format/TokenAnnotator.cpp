@@ -3136,8 +3136,9 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if ((Left.is(TT_AttributeSquare) && Right.is(tok::l_square)) ||
       (Left.is(tok::r_square) && Right.is(TT_AttributeSquare)))
     return false;
-  return Left.isOneOf(tok::comma, tok::coloncolon, tok::semi, tok::l_brace,
-                      tok::kw_class, tok::kw_struct, tok::comment) ||
+  return Left.isOneOf(tok::comma, tok::semi, tok::l_brace, tok::kw_class,
+                      tok::kw_struct, tok::comment) ||
+         (Left.is(tok::coloncolon) && !Style.UseThinkCellStyle) ||
          Right.isMemberAccess() ||
          Right.isOneOf(TT_TrailingReturnArrow, TT_LambdaArrow, tok::lessless,
                        tok::colon, tok::l_square, tok::at) ||
