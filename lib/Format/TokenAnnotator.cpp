@@ -2883,6 +2883,8 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
       Style.BreakConstructorInitializers == FormatStyle::BCIS_BeforeComma &&
       !Style.ConstructorInitializerAllOnOneLineOrOnePerLine)
     return true;
+  if (Style.UseThinkCellStyle && Right.is(TT_CtorInitializerColon))
+    return true;
   // Break only if we have multiple inheritance.
   if (Style.BreakBeforeInheritanceComma && Right.is(TT_InheritanceComma))
     return true;

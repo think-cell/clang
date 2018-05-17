@@ -11347,6 +11347,16 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     "	: aaaaaaaaaaaaaaaaaaaaaaaaaaaa;\n",
     Style);
 
+  verifyFormat(
+    "ClassName::ClassName() noexcept\n"
+    "	: OneParameter(true)\n"
+    "	, AnotherParameter(10)\n"
+    "{\n"
+    "	Statement1;\n"
+    "	Statement2;\n"
+    "}\n",
+    Style);
+
   Style.ColumnLimit = 15;
   verifyFormat(
     "if (\n"
