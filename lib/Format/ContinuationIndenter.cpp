@@ -676,6 +676,7 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
       (P->isOneOf(TT_BinaryOperator, tok::comma) ||
        (P->is(TT_ConditionalExpr) && P->is(tok::colon))) &&
       !P->isOneOf(TT_OverloadedOperator, TT_CtorInitializerComma) &&
+      (P->getPrecedence() != prec::Equality || !Style.UseThinkCellStyle) &&
       P->getPrecedence() != prec::Assignment &&
       P->getPrecedence() != prec::Relational &&
       P->getPrecedence() != prec::Spaceship) {

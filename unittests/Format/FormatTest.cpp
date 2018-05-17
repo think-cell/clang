@@ -11520,6 +11520,20 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     "Aaaaaaaaaaaa\n"
     "	aaaaaaaaaaaaaa::bbbb;\n",
     Style);
+
+  verifyFormat(
+    "if (\n"
+    "	aaaaaa\n"
+    "	&& aaaa == aaaaa(\n"
+    "		[&]() noexcept {\n"
+    "			return a;\n"
+    "		},\n"
+    "		true\n"
+    "	)\n"
+    ") {\n"
+    "	aaaaa;\n"
+    "}\n",
+    Style);
 }
 
 TEST_F(FormatTest, FormatsLambdas) {
