@@ -11357,6 +11357,60 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     "}\n",
     Style);
 
+  verifyFormat(
+    "LRESULT edit_nonedit_combobox_win::ListBox_GetCount(\n"
+    "	UINT uMsg,\n"
+    "	BOOL& bHandled\n"
+    ") /*no &*/ noexcept {\n"
+    "	return 0;\n"
+    "}\n",
+    Style);
+
+  verifyFormat(
+    "LRESULT edit_nonedit_combobox_win::ListBox_GetCount(\n"
+    "	UINT uMsg,\n"
+    "	BOOL& bHandled\n"
+    ") & noexcept {\n"
+    "	return 0;\n"
+    "}\n",
+    Style);
+
+  verifyFormat(
+    "LRESULT edit_nonedit_combobox_win::ListBox_GetCount(\n"
+    "	UINT uMsg,\n"
+    "	BOOL& bHandled\n"
+    ") const& noexcept {\n"
+    "	return 0;\n"
+    "}\n",
+    Style);
+
+  verifyFormat(
+    "LRESULT edit_nonedit_combobox_win::ListBox_GetCount(\n"
+    "	UINT uMsg,\n"
+    "	BOOL& bHandled\n"
+    ") const /*no &*/ noexcept {\n"
+    "	return 0;\n"
+    "}\n",
+    Style);
+
+  verifyFormat(
+    "LRESULT edit_nonedit_combobox_win::ListBox_GetCount(\n"
+    "	UINT uMsg,\n"
+    "	BOOL& bHandled\n"
+    ") const& THROW(something) {\n"
+    "	return 0;\n"
+    "}\n",
+    Style);
+
+  verifyFormat(
+    "LRESULT edit_nonedit_combobox_win::ListBox_GetCount(\n"
+    "	UINT uMsg,\n"
+    "	BOOL& bHandled\n"
+    ") THROW(something) {\n"
+    "	return 0;\n"
+    "}\n",
+    Style);
+
   Style.ColumnLimit = 15;
   verifyFormat(
     "if (\n"

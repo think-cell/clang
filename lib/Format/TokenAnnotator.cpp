@@ -2268,6 +2268,11 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
                : 35;
   }
 
+  if (Style.UseThinkCellStyle &&
+      (Right.is(TT_TrailingAnnotation) ||
+       (Right.is(tok::amp) && Left.is(tok::r_paren) && InFunctionDecl)))
+    return 500;
+
   if (Right.is(TT_TrailingAnnotation) &&
       (!Right.Next || Right.Next->isNot(tok::l_paren))) {
     // Moving trailing annotations to the next line is fine for ObjC method
