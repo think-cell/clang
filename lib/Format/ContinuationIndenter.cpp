@@ -638,7 +638,7 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
       //           caaaaaaaaaaaall(
       //               caaaaaaaaaaaaaaaaaaaaaaall(aaaaaaaaaaaaaa, aaaaaaaaa))));
       Current.FakeLParens.size() > 0 &&
-      Current.FakeLParens.back() > prec::Unknown)
+      (Current.FakeLParens.back() > prec::Unknown || Style.UseThinkCellStyle))
     State.Stack.back().NoLineBreak = true;
   if (Previous.is(TT_TemplateString) && Previous.opensScope())
     State.Stack.back().NoLineBreak = true;

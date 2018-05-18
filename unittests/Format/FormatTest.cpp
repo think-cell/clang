@@ -11411,6 +11411,23 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     "}\n",
     Style);
 
+  verifyFormat(
+    "HRERR(\n"
+    "	NOEXCEPT(\n"
+    "		PpApplication()\n"
+    "			->m_iApplication->GetActivePresentation()\n"
+    "			->AndSomeMoreNesting->EvenMoreNesting()\n"
+    "			->AndLastOne()\n"
+    "	)\n"
+    "		->raw_SaveAs(\n"
+    "			tc::bstr(strSaveTo).raw(),\n"
+    "			PowerPoint::ppSaveAsDefault,\n"
+    "			Office::msoTriStateMixed,\n"
+    "			AnoAnotherPa param\n"
+    "		)\n"
+    ");\n",
+    Style);
+
   Style.ColumnLimit = 15;
   verifyFormat(
     "if (\n"
@@ -11534,6 +11551,18 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     "	aaaaa;\n"
     "}\n",
     Style);
+
+  verifyFormat(
+    "func(NO(\n"
+    "	tc(\n"
+    "		pres,\n"
+    "		bSave,\n"
+    "		bSave,\n"
+    "		bSave,\n"
+    "	)->Result()\n"
+    "));\n",
+    Style);
+
 }
 
 TEST_F(FormatTest, FormatsLambdas) {
