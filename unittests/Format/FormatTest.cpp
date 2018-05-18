@@ -11428,6 +11428,12 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     ");\n",
     Style);
 
+  verifyFormat(
+    "throw _GTMARK(\"Each template object must contain a data array describing \"\n"
+    "	\"the data to be inserted into the template.\"\n"
+    ");\n",
+    Style);
+
   Style.ColumnLimit = 15;
   verifyFormat(
     "if (\n"

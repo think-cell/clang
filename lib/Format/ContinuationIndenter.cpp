@@ -983,7 +983,8 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
       State.StartOfStringLiteral != 0)
     return State.StartOfStringLiteral - 1;
   if (NextNonComment->isStringLiteral() && State.StartOfStringLiteral != 0)
-    return State.StartOfStringLiteral;
+    return Style.UseThinkCellStyle ? State.Stack.back().Indent
+                                   : State.StartOfStringLiteral;
   if (NextNonComment->is(tok::lessless) &&
       State.Stack.back().FirstLessLess != 0)
     return State.Stack.back().FirstLessLess;
