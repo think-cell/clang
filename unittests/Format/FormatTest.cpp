@@ -11434,6 +11434,55 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     ");\n",
     Style);
 
+  verifyFormat(
+    "aaaaaa = //\n"
+    "	[&]() noexcept {\n"
+    "		return aaaaaaa;\n"
+    "	}();\n",
+    Style);
+
+  verifyFormat(
+    "aaa = aaaaa && //\n"
+    "		[&]() noexcept {\n"
+    "			return aaaaaaa;\n"
+    "		}()\n"
+    "		&& zeta\n"
+    "	|| gamma && beta;\n",
+    Style);
+
+  verifyFormat(
+    "aaaaaa = //\n"
+    "	[&]() noexcept -> aaa<bb> {\n"
+    "		return aaaaaaa;\n"
+    "	}();\n",
+    Style);
+
+  verifyFormat(
+    "aaaaaa = aaaaaaaaaaaa\n"
+    "	?\n"
+    "	[&]() noexcept -> bool {\n"
+    "		return true;\n"
+    "	}()\n"
+    "		? aaaaaaaaaaaa\n"
+    "		: aaaaaaaaaaaaaaaaaaa\n"
+    "	: aaaaaaaaaaaaaaaaaaaaaaaaaaaa;\n",
+    Style);
+
+  verifyFormat(
+    "void function::function()\n"
+    "	: Something()\n"
+    "{}\n",
+    Style);
+
+  verifyFormat(
+    "struct A\n"
+    "	: B\n"
+    "	, C\n"
+    "{\n"
+    "	int x = 10;\n"
+    "};\n",
+    Style);
+
   Style.ColumnLimit = 15;
   verifyFormat(
     "if (\n"

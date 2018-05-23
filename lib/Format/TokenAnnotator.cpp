@@ -1781,7 +1781,7 @@ private:
         return prec::Assignment;
       if (Current->is(TT_JsComputedPropertyName))
         return prec::Assignment;
-      if (Current->is(TT_LambdaArrow))
+      if (!Style.UseThinkCellStyle && Current->is(TT_LambdaArrow))
         return prec::Comma;
       if (Current->is(TT_JsFatArrow))
         return prec::Assignment;

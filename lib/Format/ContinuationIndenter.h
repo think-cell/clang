@@ -243,6 +243,9 @@ struct ParenState {
   /// The column of a \c ? in a conditional expression;
   unsigned QuestionColumn = 0;
 
+  /// The column of a \c [ in a lambda.
+  unsigned LambdaLSquareColumn = 0;
+
   /// The position of the colon in an ObjC method declaration/call.
   unsigned ColonPos = 0;
 
@@ -353,6 +356,8 @@ struct ParenState {
       return BreakBeforeClosingParen;
     if (QuestionColumn != Other.QuestionColumn)
       return QuestionColumn < Other.QuestionColumn;
+    if (LambdaLSquareColumn != Other.LambdaLSquareColumn)
+      return LambdaLSquareColumn < Other.LambdaLSquareColumn;
     if (AvoidBinPacking != Other.AvoidBinPacking)
       return AvoidBinPacking;
     if (BreakBeforeParameter != Other.BreakBeforeParameter)

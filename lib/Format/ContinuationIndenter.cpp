@@ -939,9 +939,11 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
                     State.Stack.back().Indent + Style.ContinuationIndentWidth);
 
   if (NextNonComment->is(tok::l_brace) && NextNonComment->BlockKind == BK_Block)
-    return Current.NestingLevel == 0 && State.Stack.back().QuestionColumn == 0
-        ? State.FirstIndent
-        : State.Stack.back().Indent;
+    return Current.NestingLevel == 0 &&
+                   State.Stack.back().LambdaLSquareColumn == 0
+               ? State.FirstIndent
+               : std::max(State.Stack.back().LastSpace,
+                          State.Stack.back().Indent);
   if ((Current.isOneOf(tok::r_brace, tok::r_square) ||
        (Current.is(tok::greater) &&
         (Style.Language == FormatStyle::LK_Proto ||
@@ -997,7 +999,8 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
       ((NextNonComment->is(tok::colon) &&
         NextNonComment->is(TT_ConditionalExpr)) ||
        Previous.is(TT_ConditionalExpr)))
-    return State.Stack.back().QuestionColumn;
+    return Style.UseThinkCellStyle ? State.Stack.back().LastSpace
+                                   : State.Stack.back().QuestionColumn;
   if (Previous.is(tok::comma) && State.Stack.back().VariablePos != 0)
     return State.Stack.back().VariablePos;
   if ((PreviousNonComment &&
@@ -1145,12 +1148,14 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     State.Stack.back().Indent =
         State.FirstIndent + Style.ContinuationIndentWidth;
 
-  // Do not add additional indents with ThinkCell style
-  if (!Style.UseThinkCellStyle) {
-    if (Current.isOneOf(TT_BinaryOperator, TT_ConditionalExpr) && Newline)
-      State.Stack.back().NestedBlockIndent =
-          State.Column + Current.ColumnWidth + 1;
-    if (Current.isOneOf(TT_LambdaLSquare, TT_LambdaArrow))
+  if (!Style.UseThinkCellStyle &&
+      Current.isOneOf(TT_BinaryOperator, TT_ConditionalExpr) && Newline)
+    State.Stack.back().NestedBlockIndent =
+        State.Column + Current.ColumnWidth + 1;
+  if (Current.isOneOf(TT_LambdaLSquare, TT_LambdaArrow)) {
+    if (Style.UseThinkCellStyle)
+      State.Stack.back().LambdaLSquareColumn = State.Column;
+    else
       State.Stack.back().LastSpace = State.Column;
   }
 
