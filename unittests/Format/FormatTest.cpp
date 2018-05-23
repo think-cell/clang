@@ -11618,6 +11618,17 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     "));\n",
     Style);
 
+  verifyFormat(
+    "aaaa *a = aaaa,\n"
+    "	*b = bbbbb,\n"
+    "	*b = bbbbb,\n"
+    "	*d = ddddd;\n",
+    Style);
+
+  verifyFormat(
+    "bool a = a->a(),\n"
+    "	b = b->b();\n",
+    Style);
 }
 
 TEST_F(FormatTest, FormatsLambdas) {

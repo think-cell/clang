@@ -1002,7 +1002,9 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
     return Style.UseThinkCellStyle ? State.Stack.back().LastSpace
                                    : State.Stack.back().QuestionColumn;
   if (Previous.is(tok::comma) && State.Stack.back().VariablePos != 0)
-    return State.Stack.back().VariablePos;
+    return Style.UseThinkCellStyle
+               ? State.Stack.back().Indent + Style.ContinuationIndentWidth
+               : State.Stack.back().VariablePos;
   if ((PreviousNonComment &&
        (PreviousNonComment->ClosesTemplateDeclaration ||
         PreviousNonComment->isOneOf(
