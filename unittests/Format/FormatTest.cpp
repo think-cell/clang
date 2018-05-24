@@ -11410,6 +11410,12 @@ TEST_F(FormatTest, FormatsLambdas) {
                "      ;\n"
                "};");
 
+  verifyFormat("if (a && []() noexcept {\n"
+               "      doo_dah();\n"
+               "      doo_dah();\n"
+               "    }()) {\n"
+               "}");
+
   // Lambdas with complex multiline introducers.
   verifyFormat(
       "aaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
