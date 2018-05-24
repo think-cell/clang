@@ -10346,6 +10346,11 @@ TEST_F(FormatTest, GetsPredefinedStyleByName) {
   EXPECT_TRUE(getPredefinedStyle("gnU", FormatStyle::LK_Cpp, &Styles[2]));
   EXPECT_ALL_STYLES_EQUAL(Styles);
 
+  Styles[0] = getThinkCellStyle();
+  EXPECT_TRUE(getPredefinedStyle("think-cell", FormatStyle::LK_Cpp, &Styles[1]));
+  EXPECT_TRUE(getPredefinedStyle("tHInk-CeLl", FormatStyle::LK_Cpp, &Styles[2]));
+  EXPECT_ALL_STYLES_EQUAL(Styles);
+
   EXPECT_FALSE(getPredefinedStyle("qwerty", FormatStyle::LK_Cpp, &Styles[0]));
 }
 
@@ -10464,6 +10469,7 @@ TEST_F(FormatTest, ParsesConfigurationBools) {
   CHECK_PARSE_BOOL(SpaceBeforeCtorInitializerColon);
   CHECK_PARSE_BOOL(SpaceBeforeInheritanceColon);
   CHECK_PARSE_BOOL(SpaceBeforeRangeBasedForLoopColon);
+  CHECK_PARSE_BOOL(UseThinkCellStyle);
 
   CHECK_PARSE_NESTED_BOOL(BraceWrapping, AfterClass);
   CHECK_PARSE_NESTED_BOOL(BraceWrapping, AfterControlStatement);
@@ -11258,6 +11264,158 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
             format("[self.a b:c\n"
                    "c:d];",
                    Style));
+}
+
+TEST_F(FormatTest, FormatsWithThinkCellStyle) {
+  FormatStyle Style = getThinkCellStyle();
+
+  // Use smaller column limit for more stress.
+  Style.ColumnLimit = 80;
+
+  verifyFormat(
+    "template<typename TTarget, typename TSource>\n"
+    "struct construction_restrictiveness<TTarget, TSource>\n"
+    "	: std::integral_constant<\n"
+    "		int,\n"
+    "		tc ::is_safely_constructible<TTarget, TSource>::value\n"
+    "			? (\n"
+    "				tc ::is_safely_convertible<TSource, TTarget>::value\n"
+    "					? implicit_construction\n"
+    "					: explicit_construction\n"
+    "			)\n"
+    "			: forbidden_construction\n"
+    "	>\n"
+    "{\n"
+    "	static_assert(!std::is_rvalue_reference<TTarget>::value);\n"
+    "};\n",
+    Style);
+
+  verifyFormat(
+    "template<typename Func, typename TargetExpr, typename... SourceExpr>\n"
+    "struct transform_return final {\n"
+    "	static constexpr bool bDecay = std::conditional_t<\n"
+    "		!std::conjunction<std::is_reference<SourceExpr>...>::value\n"
+    "			&& std::is_rvalue_reference<TargetExpr>::value,\n"
+    "		delayed_returns_reference_to_argument<Func>,\n"
+    "		std::false_type\n"
+    "	>::type::value;\n"
+    "	using type =\n"
+    "		std::conditional_t<bDecay, tc::decay_t<TargetExpr>, TargetExpr>;\n"
+    "};\n",
+    Style);
+
+  verifyFormat(
+    "SEnumerateGapConstraints<\n"
+    "	RngBucket,\n"
+    "	tc::decay_t<FGap>,\n"
+    "	tc::decay_t<FGapToInfinity>,\n"
+    "	tc::decay_t<BConstrainAtSamePosition>,\n"
+    "	tc::decay_t<FInsertGapToInfinity>,\n"
+    "	tc::decay_t<FInsertGap>,\n"
+    "	tc::decay_t<MapGridlineSpans>\n"
+    ">(\n"
+    "	rngbucket,\n"
+    "	std::forward<FGap>(Gap),\n"
+    "	std::forward<FGapToInfinity>(GapToInfinity),\n"
+    "	std::forward<BConstrainAtSamePosition>(ConstrainAtSamePosition),\n"
+    "	std::forward<FInsertGapToInfinity>(InsertGapToInfinity),\n"
+    "	std::forward<FInsertGap>(InsertGap),\n"
+    "	std::forward<MapGridlineSpans>(mapgrdlnspans)\n"
+    ");\n",
+    Style);
+
+  verifyFormat(
+    "itintvlLeft = tc::upper_bound<tc::return_element_before>(\n"
+    "	tc::transform(\n"
+    "		rngintvlLeft,\n"
+    "		[](auto const& intvl) noexcept {\n"
+    "			return intvl[tc::lo];\n"
+    "		}\n"
+    "	),\n"
+    "	(*itintvlRight)[tc::lo]\n"
+    ").element_base();\n",
+    Style);
+
+  Style.ColumnLimit = 15;
+  verifyFormat(
+    "if (\n"
+    "	SelectedText()\n"
+    "		? !m_closest\n"
+    "			->HasTextFrame(\n"
+    "				SelectedText()\n"
+    "					.TextFrame()\n"
+    "			)\n"
+    "		: !SmartGridFeaturesSelected()\n"
+    ") {\n"
+    "}\n",
+    Style);
+
+  verifyFormat(
+    "if (\n"
+    "	a //\n"
+    "	|| (\n"
+    "		obd.m_nMsg\n"
+    "			== WM_RBUTTONDOWN\n"
+    "		|| obd.m_nMsg\n"
+    "			== WM_RBUTTONDBLCLK\n"
+    "	) && a\n"
+    ") {\n"
+    "}\n",
+    Style);
+
+  verifyFormat(
+    "if (\n"
+    "	fnShapeAtMousePosition()\n"
+    "		.m_bReliable\n"
+    "	&&\n"
+    "	[&]() noexcept {\n"
+    "		return 0;\n"
+    "	}()\n"
+    ")\n",
+    Style);
+
+  verifyFormat(
+    "void LongFunctionName() {\n"
+    "	return 0;\n"
+    "}\n",
+    Style);
+
+
+  verifyFormat(
+    "template<\n"
+    "	typename Func,\n"
+    "	typename TargetExpr,\n"
+    "	typename... SourceExpr\n"
+    ">\n"
+    "struct transform_return\n"
+    "	final\n"
+    "{\n"
+    "	static constexpr bool\n"
+    "		bDecay = std::conditional_t<\n"
+    "			!std::conjunction<\n"
+    "				std::is_reference<\n"
+    "					SourceExpr\n"
+    "				>...\n"
+    "			>::value\n"
+    "				&& std::is_rvalue_reference<\n"
+    "					TargetExpr\n"
+    "				>::value,\n"
+    "			delayed_returns_reference_to_argument<\n"
+    "				Func\n"
+    "			>,\n"
+    "			std::false_type\n"
+    "		>::type::\n"
+    "			value;\n"
+    "	using type =\n"
+    "		std::conditional_t<\n"
+    "			bDecay,\n"
+    "			tc::decay_t<\n"
+    "				TargetExpr\n"
+    "			>,\n"
+    "			TargetExpr\n"
+    "		>;\n"
+    "};\n",
+    Style);
 }
 
 TEST_F(FormatTest, FormatsLambdas) {

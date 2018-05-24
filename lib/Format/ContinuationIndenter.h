@@ -204,12 +204,13 @@ struct ParenState {
              bool AvoidBinPacking, bool NoLineBreak)
       : Tok(Tok), Indent(Indent), LastSpace(LastSpace),
         NestedBlockIndent(Indent), BreakBeforeClosingBrace(false),
-        AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
-        NoLineBreak(NoLineBreak), NoLineBreakInOperand(false),
-        LastOperatorWrapped(true), ContainsLineBreak(false),
-        ContainsUnwrappedBuilder(false), AlignColons(true),
-        ObjCSelectorNameFound(false), HasMultipleNestedBlocks(false),
-        NestedBlockInlined(false), IsInsideObjCArrayLiteral(false) {}
+        BreakBeforeClosingParen(false), AvoidBinPacking(AvoidBinPacking),
+        BreakBeforeParameter(false), NoLineBreak(NoLineBreak),
+        NoLineBreakInOperand(false), LastOperatorWrapped(true),
+        ContainsLineBreak(false), ContainsUnwrappedBuilder(false),
+        AlignColons(true), ObjCSelectorNameFound(false),
+        HasMultipleNestedBlocks(false), NestedBlockInlined(false),
+        IsInsideObjCArrayLiteral(false) {}
 
   /// \brief The token opening this parenthesis level, or nullptr if this level
   /// is opened by fake parenthesis.
@@ -271,6 +272,13 @@ struct ParenState {
   /// We only want to insert a newline before the closing brace if there also
   /// was a newline after the beginning left brace.
   bool BreakBeforeClosingBrace : 1;
+
+  /// Whether a newline needs to be inserted before the closing
+  /// parenthesis.
+  ///
+  /// We only want to nisert newline before the closing parenthesis if there
+  /// also was a newline after the opening parenthesis.
+  bool BreakBeforeClosingParen : 1;
 
   /// Avoid bin packing, i.e. multiple parameters/elements on multiple
   /// lines, in this context.
@@ -341,6 +349,8 @@ struct ParenState {
       return FirstLessLess < Other.FirstLessLess;
     if (BreakBeforeClosingBrace != Other.BreakBeforeClosingBrace)
       return BreakBeforeClosingBrace;
+    if (BreakBeforeClosingParen != Other.BreakBeforeClosingParen)
+      return BreakBeforeClosingParen;
     if (QuestionColumn != Other.QuestionColumn)
       return QuestionColumn < Other.QuestionColumn;
     if (AvoidBinPacking != Other.AvoidBinPacking)
@@ -424,6 +434,10 @@ struct LineState {
   /// Does not need to be considered for memoization because it doesn't change.
   const AnnotatedLine *Line;
 
+  /// Last space on the current line. Basically correct indentation taking into
+  /// account previous line breaks.
+  unsigned LastSpace;
+
   /// Comparison operator to be able to used \c LineState in \c map.
   bool operator<(const LineState &Other) const {
     if (NextToken != Other.NextToken)
@@ -443,6 +457,8 @@ struct LineState {
       return StartOfStringLiteral < Other.StartOfStringLiteral;
     if (IgnoreStackForComparison || Other.IgnoreStackForComparison)
       return false;
+    if (LastSpace != Other.LastSpace)
+      return LastSpace < Other.LastSpace;
     return Stack < Other.Stack;
   }
 };

@@ -1689,6 +1689,9 @@ struct FormatStyle {
   /// The way to use tab characters in the resulting file.
   UseTabStyle UseTab;
 
+  /// Switch to turn on think-cell code style.
+  bool UseThinkCellStyle = false;
+
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
            AlignAfterOpenBracket == R.AlignAfterOpenBracket &&
@@ -1781,7 +1784,7 @@ struct FormatStyle {
            SpacesInParentheses == R.SpacesInParentheses &&
            SpacesInSquareBrackets == R.SpacesInSquareBrackets &&
            Standard == R.Standard && TabWidth == R.TabWidth &&
-           UseTab == R.UseTab;
+           UseTab == R.UseTab && UseThinkCellStyle == R.UseThinkCellStyle;
   }
 
   llvm::Optional<FormatStyle> GetLanguageStyle(LanguageKind Language) const;
@@ -1847,6 +1850,9 @@ FormatStyle getWebKitStyle();
 /// Returns a format style complying with GNU Coding Standards:
 /// http://www.gnu.org/prep/standards/standards.html
 FormatStyle getGNUStyle();
+
+/// Returns a format style complying with think-cell coding standards.
+FormatStyle getThinkCellStyle();
 
 /// Returns style indicating formatting should be not applied at all.
 FormatStyle getNoStyle();

@@ -251,8 +251,8 @@ template <> struct MappingTraits<FormatStyle> {
     IO.mapOptional("Language", Style.Language);
 
     if (IO.outputting()) {
-      StringRef StylesArray[] = {"LLVM",    "Google", "Chromium",
-                                 "Mozilla", "WebKit", "GNU"};
+      StringRef StylesArray[] = {"LLVM",   "Google", "Chromium",  "Mozilla",
+                                 "WebKit", "GNU",    "think-cell"};
       ArrayRef<StringRef> Styles(StylesArray);
       for (size_t i = 0, e = Styles.size(); i < e; ++i) {
         StringRef StyleName(Styles[i]);
@@ -433,6 +433,7 @@ template <> struct MappingTraits<FormatStyle> {
     IO.mapOptional("Standard", Style.Standard);
     IO.mapOptional("TabWidth", Style.TabWidth);
     IO.mapOptional("UseTab", Style.UseTab);
+    IO.mapOptional("UseThinkCellStyle", Style.UseThinkCellStyle);
   }
 };
 
@@ -887,6 +888,45 @@ FormatStyle getGNUStyle() {
   return Style;
 }
 
+FormatStyle getThinkCellStyle() {
+  FormatStyle Style = getLLVMStyle();
+  Style.AccessModifierOffset = -4;
+  Style.AlignAfterOpenBracket = FormatStyle::BAS_AlwaysBreak;
+  Style.AlignOperands = false;
+  Style.AlignTrailingComments = false;
+  Style.AlignEscapedNewlines = FormatStyle::ENAS_DontAlign;
+  Style.AllowAllParametersOfDeclarationOnNextLine = false;
+  Style.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Empty;
+  Style.AllowShortIfStatementsOnASingleLine = true;
+  Style.AlwaysBreakTemplateDeclarations = true;
+  Style.BinPackArguments = false;
+  Style.BinPackParameters = false;
+  Style.BreakBeforeBinaryOperators = FormatStyle::BOS_NonAssignment;
+  Style.BreakBeforeInheritanceComma = true;
+  // Do not reformat any comments.
+  Style.CommentPragmas = ".*";
+  Style.BreakConstructorInitializers = FormatStyle::BCIS_BeforeComma;
+  Style.ColumnLimit = 140;
+  Style.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
+  Style.Cpp11BracedListStyle = false;
+  Style.FixNamespaceComments = false;
+  Style.IndentCaseLabels = true;
+  Style.IndentWidth = 4;
+  Style.MacroBlockBegin = "^ENTRY[_A-Z]*$|^BEGIN_MSG_MAP$";
+  Style.MacroBlockEnd = "^EXIT$|^END_MSG_MAP$";
+  Style.NamespaceIndentation = FormatStyle::NI_All;
+  Style.PenaltyBreakBeforeFirstCallParameter = 1;
+  Style.PenaltyExcessCharacter = 100;
+  Style.PenaltyReturnTypeOnItsOwnLine = 2000;
+  Style.PointerAlignment = FormatStyle::PAS_Left;
+  Style.SortIncludes = false;
+  Style.SpaceAfterTemplateKeyword = false;
+  Style.TabWidth = 4;
+  Style.UseTab = FormatStyle::UT_Always;
+  Style.UseThinkCellStyle = true;
+  return Style;
+}
+
 FormatStyle getNoStyle() {
   FormatStyle NoStyle = getLLVMStyle();
   NoStyle.DisableFormat = true;
@@ -909,6 +949,8 @@ bool getPredefinedStyle(StringRef Name, FormatStyle::LanguageKind Language,
     *Style = getWebKitStyle();
   } else if (Name.equals_lower("gnu")) {
     *Style = getGNUStyle();
+  } else if (Name.equals_lower("think-cell")) {
+    *Style = getThinkCellStyle();
   } else if (Name.equals_lower("none")) {
     *Style = getNoStyle();
   } else {

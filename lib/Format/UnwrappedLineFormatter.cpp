@@ -1061,10 +1061,11 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
       NextLine = Joiner.getNextMergedLine(DryRun, IndentTracker);
       unsigned ColumnLimit = getColumnLimit(TheLine.InPPDirective, NextLine);
       bool FitsIntoOneLine =
-          TheLine.Last->TotalLength + Indent <= ColumnLimit ||
-          (TheLine.Type == LT_ImportStatement &&
-           (Style.Language != FormatStyle::LK_JavaScript ||
-            !Style.JavaScriptWrapImports));
+          (TheLine.Last->TotalLength + Indent <= ColumnLimit ||
+           (TheLine.Type == LT_ImportStatement &&
+            (Style.Language != FormatStyle::LK_JavaScript ||
+             !Style.JavaScriptWrapImports))) &&
+          TheLine.Children.empty();
       if (Style.ColumnLimit == 0)
         NoColumnLimitLineFormatter(Indenter, Whitespaces, Style, this)
             .formatLine(TheLine, NextStartColumn + Indent,

@@ -241,6 +241,7 @@ LineState ContinuationIndenter::getInitialState(unsigned FirstIndent,
     State.Column = FirstStartColumn;
   else
     State.Column = FirstIndent;
+  State.LastSpace = State.Column;
   // With preprocessor directive indentation, the line starts on column 0
   // since it's indented after the hash, but FirstIndent is set to the
   // preprocessor indent.
@@ -319,6 +320,25 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
       State.Stack.back().NoLineBreakInOperand)
     return false;
 
+  // Don't break before ) >, if it would put it on the same indent level as
+  // current line, or lower.
+  unsigned NewLineColumn = getNewLineColumn(State);
+  if (Style.UseThinkCellStyle &&
+      Current.isOneOf(tok::r_paren, TT_TemplateCloser) &&
+      State.LastSpace <= NewLineColumn)
+    return false;
+
+  if (Style.UseThinkCellStyle && State.Stack.back().QuestionColumn != 0 &&
+      Current.is(tok::colon) && Current.is(TT_ConditionalExpr) &&
+      // Allow break only if question was the first in it's line
+      State.Stack.back().QuestionColumn != State.Stack.back().LastSpace)
+    return false;
+
+  // Don't break before '{' if this line's last space is correct
+  if (Style.UseThinkCellStyle && NewLineColumn >= State.LastSpace &&
+      Current.is(tok::l_brace))
+    return false;
+
   return !State.Stack.back().NoLineBreak;
 }
 
@@ -329,6 +349,14 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
     return true;
   if (State.Stack.back().BreakBeforeClosingBrace &&
       Current.closesBlockOrBlockTypeList(Style))
+    return true;
+  if (!Style.AllowShortBlocksOnASingleLine &&
+      Style.AllowShortFunctionsOnASingleLine <= FormatStyle::SFS_Empty &&
+      Style.isCpp() && Previous.is(tok::l_brace) && !Previous.Children.empty())
+    return true;
+  if (Style.UseThinkCellStyle &&
+      Current.isOneOf(tok::r_paren, TT_TemplateCloser) &&
+      State.LastSpace > getNewLineColumn(State))
     return true;
   if (Previous.is(tok::semi) && State.LineContainsContinuedForLoopSection)
     return true;
@@ -397,7 +425,8 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       //   }.bind(...));
       // FIXME: We should find a more generic solution to this problem.
       !(State.Column <= NewLineColumn &&
-        Style.Language == FormatStyle::LK_JavaScript))
+        (Style.Language == FormatStyle::LK_JavaScript ||
+         Style.UseThinkCellStyle)))
     return true;
 
   if (State.Column <= NewLineColumn)
@@ -482,6 +511,10 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
     return true;
 
   if (State.NoContinuation)
+    return true;
+
+  if (Style.UseThinkCellStyle && NewLineColumn < State.LastSpace &&
+      Current.is(tok::l_brace))
     return true;
 
   return false;
@@ -590,9 +623,11 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
   // opening parenthesis. Don't break if it doesn't conserve columns.
   if (Style.AlignAfterOpenBracket == FormatStyle::BAS_AlwaysBreak &&
       Previous.isOneOf(tok::l_paren, TT_TemplateOpener, tok::l_square) &&
-      State.Column > getNewLineColumn(State) &&
-      (!Previous.Previous || !Previous.Previous->isOneOf(
-                                 tok::kw_for, tok::kw_while, tok::kw_switch)) &&
+      (Style.UseThinkCellStyle ||
+       (State.Column > getNewLineColumn(State) &&
+        (!Previous.Previous ||
+         !Previous.Previous->isOneOf(tok::kw_for, tok::kw_while,
+                                     tok::kw_switch)))) &&
       // Don't do this for simple (no expressions) one-argument function calls
       // as that feels like needlessly wasting whitespace, e.g.:
       //
@@ -606,7 +641,8 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
   if (Previous.is(TT_TemplateString) && Previous.opensScope())
     State.Stack.back().NoLineBreak = true;
 
-  if (Style.AlignAfterOpenBracket != FormatStyle::BAS_DontAlign &&
+  if (!Style.UseThinkCellStyle &&
+      Style.AlignAfterOpenBracket != FormatStyle::BAS_DontAlign &&
       Previous.opensScope() && Previous.isNot(TT_ObjCMethodExpr) &&
       (Current.isNot(TT_LineComment) || Previous.BlockKind == BK_BracedInit))
     State.Stack.back().Indent = State.Column + Spaces;
@@ -657,51 +693,54 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
   }
 
   State.Column += Spaces;
-  if (Current.isNot(tok::comment) && Previous.is(tok::l_paren) &&
-      Previous.Previous &&
-      (Previous.Previous->isOneOf(tok::kw_if, tok::kw_for) ||
-       Previous.Previous->endsSequence(tok::kw_constexpr, tok::kw_if))) {
-    // Treat the condition inside an if as if it was a second function
-    // parameter, i.e. let nested calls have a continuation indent.
-    State.Stack.back().LastSpace = State.Column;
-    State.Stack.back().NestedBlockIndent = State.Column;
-  } else if (!Current.isOneOf(tok::comment, tok::caret) &&
-             ((Previous.is(tok::comma) &&
-               !Previous.is(TT_OverloadedOperator)) ||
-              (Previous.is(tok::colon) && Previous.is(TT_ObjCMethodExpr)))) {
-    State.Stack.back().LastSpace = State.Column;
-  } else if (Previous.is(TT_CtorInitializerColon) &&
-             Style.BreakConstructorInitializers ==
-                 FormatStyle::BCIS_AfterColon) {
-    State.Stack.back().Indent = State.Column;
-    State.Stack.back().LastSpace = State.Column;
-  } else if ((Previous.isOneOf(TT_BinaryOperator, TT_ConditionalExpr,
-                               TT_CtorInitializerColon)) &&
-             ((Previous.getPrecedence() != prec::Assignment &&
-               (Previous.isNot(tok::lessless) || Previous.OperatorIndex != 0 ||
-                Previous.NextOperator)) ||
-              Current.StartsBinaryExpression)) {
-    // Indent relative to the RHS of the expression unless this is a simple
-    // assignment without binary expression on the RHS. Also indent relative to
-    // unary operators and the colons of constructor initializers.
-    State.Stack.back().LastSpace = State.Column;
-  } else if (Previous.is(TT_InheritanceColon)) {
-    State.Stack.back().Indent = State.Column;
-    State.Stack.back().LastSpace = State.Column;
-  } else if (Previous.opensScope()) {
-    // If a function has a trailing call, indent all parameters from the
-    // opening parenthesis. This avoids confusing indents like:
-    //   OuterFunction(InnerFunctionCall( // break
-    //       ParameterToInnerFunction))   // break
-    //       .SecondInnerFunctionCall();
-    bool HasTrailingCall = false;
-    if (Previous.MatchingParen) {
-      const FormatToken *Next = Previous.MatchingParen->getNextNonComment();
-      HasTrailingCall = Next && Next->isMemberAccess();
-    }
-    if (HasTrailingCall && State.Stack.size() > 1 &&
-        State.Stack[State.Stack.size() - 2].CallContinuation == 0)
+  // Do not add any additional indents when using ThinkCell style
+  if (!Style.UseThinkCellStyle) {
+    if (Current.isNot(tok::comment) && Previous.is(tok::l_paren) &&
+        Previous.Previous &&
+        (Previous.Previous->isOneOf(tok::kw_if, tok::kw_for) ||
+         Previous.Previous->endsSequence(tok::kw_constexpr, tok::kw_if))) {
+      // Treat the condition inside an if as if it was a second function
+      // parameter, i.e. let nested calls have a continuation indent.
       State.Stack.back().LastSpace = State.Column;
+      State.Stack.back().NestedBlockIndent = State.Column;
+    } else if (!Current.isOneOf(tok::comment, tok::caret) &&
+               ((Previous.is(tok::comma) &&
+                 !Previous.is(TT_OverloadedOperator)) ||
+                (Previous.is(tok::colon) && Previous.is(TT_ObjCMethodExpr)))) {
+      State.Stack.back().LastSpace = State.Column;
+    } else if (Previous.is(TT_CtorInitializerColon) &&
+               Style.BreakConstructorInitializers ==
+                   FormatStyle::BCIS_AfterColon) {
+      State.Stack.back().Indent = State.Column;
+      State.Stack.back().LastSpace = State.Column;
+    } else if ((Previous.isOneOf(TT_BinaryOperator, TT_ConditionalExpr,
+                                 TT_CtorInitializerColon)) &&
+               ((Previous.getPrecedence() != prec::Assignment &&
+                 (Previous.isNot(tok::lessless) ||
+                  Previous.OperatorIndex != 0 || Previous.NextOperator)) ||
+                Current.StartsBinaryExpression)) {
+      // Indent relative to the RHS of the expression unless this is a simple
+      // assignment without binary expression on the RHS. Also indent relative
+      // to unary operators and the colons of constructor initializers.
+      State.Stack.back().LastSpace = State.Column;
+    } else if (Previous.is(TT_InheritanceColon)) {
+      State.Stack.back().Indent = State.Column;
+      State.Stack.back().LastSpace = State.Column;
+    } else if (Previous.opensScope()) {
+      // If a function has a trailing call, indent all parameters from the
+      // opening parenthesis. This avoids confusing indents like:
+      //   OuterFunction(InnerFunctionCall( // break
+      //       ParameterToInnerFunction))   // break
+      //       .SecondInnerFunctionCall();
+      bool HasTrailingCall = false;
+      if (Previous.MatchingParen) {
+        const FormatToken *Next = Previous.MatchingParen->getNextNonComment();
+        HasTrailingCall = Next && Next->isMemberAccess();
+      }
+      if (HasTrailingCall && State.Stack.size() > 1 &&
+          State.Stack[State.Stack.size() - 2].CallContinuation == 0)
+        State.Stack.back().LastSpace = State.Column;
+    }
   }
 }
 
@@ -736,6 +775,7 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
     Penalty += Style.PenaltyBreakFirstLessLess;
 
   State.Column = getNewLineColumn(State);
+  State.LastSpace = State.Column;
 
   // Indent nested blocks relative to this column, unless in a very specific
   // JavaScript special case where:
@@ -910,6 +950,10 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
       return State.Stack[State.Stack.size() - 2].LastSpace;
     return State.FirstIndent;
   }
+  if (Style.UseThinkCellStyle &&
+      Current.isOneOf(tok::r_paren, TT_TemplateCloser) &&
+      State.Stack.size() > 1)
+    return State.Stack[State.Stack.size() - 2].LastSpace;
   // Indent a closing parenthesis at the previous level if followed by a semi or
   // opening brace. This allows indentations such as:
   //     foo(
@@ -1095,11 +1139,15 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   if (Current.is(TT_InheritanceColon))
     State.Stack.back().Indent =
         State.FirstIndent + Style.ContinuationIndentWidth;
-  if (Current.isOneOf(TT_BinaryOperator, TT_ConditionalExpr) && Newline)
-    State.Stack.back().NestedBlockIndent =
-        State.Column + Current.ColumnWidth + 1;
-  if (Current.isOneOf(TT_LambdaLSquare, TT_LambdaArrow))
-    State.Stack.back().LastSpace = State.Column;
+
+  // Do not add additional indents with ThinkCell style
+  if (!Style.UseThinkCellStyle) {
+    if (Current.isOneOf(TT_BinaryOperator, TT_ConditionalExpr) && Newline)
+      State.Stack.back().NestedBlockIndent =
+          State.Column + Current.ColumnWidth + 1;
+    if (Current.isOneOf(TT_LambdaLSquare, TT_LambdaArrow))
+      State.Stack.back().LastSpace = State.Column;
+  }
 
   // Insert scopes created by fake parenthesis.
   const FormatToken *Previous = Current.getPreviousNonComment();
@@ -1198,10 +1246,15 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
         (!Previous || Previous->isNot(tok::kw_return) ||
          (Style.Language != FormatStyle::LK_Java && *I > 0)) &&
         (Style.AlignAfterOpenBracket != FormatStyle::BAS_DontAlign ||
-         *I != prec::Comma || Current.NestingLevel == 0))
+         *I != prec::Comma || Current.NestingLevel == 0)) {
       NewParenState.Indent =
-          std::max(std::max(State.Column, NewParenState.Indent),
-                   State.Stack.back().LastSpace);
+          std::max(State.Stack.back().LastSpace, NewParenState.Indent);
+      // Don't use column for think-cell style indent
+      if (Style.UseThinkCellStyle)
+        NewParenState.Indent = std::max(State.LastSpace, NewParenState.Indent);
+      else
+        NewParenState.Indent = std::max(State.Column, NewParenState.Indent);
+    }
 
     // Do not indent relative to the fake parentheses inserted for "." or "->".
     // This is a special case to make the following to statements consistent:
@@ -1209,8 +1262,14 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
     //       ParameterToInnerFunction));
     //   OuterFunction(SomeObject.InnerFunctionCall( // break
     //       ParameterToInnerFunction));
-    if (*I > prec::Unknown)
-      NewParenState.LastSpace = std::max(NewParenState.LastSpace, State.Column);
+    if (*I > prec::Unknown) {
+      if (Style.UseThinkCellStyle)
+        NewParenState.LastSpace =
+            std::max(NewParenState.LastSpace, State.LastSpace);
+      else
+        NewParenState.LastSpace =
+            std::max(NewParenState.LastSpace, State.Column);
+    }
     if (*I != prec::Conditional && !Current.is(TT_UnaryOperator) &&
         Style.AlignAfterOpenBracket != FormatStyle::BAS_DontAlign)
       NewParenState.StartOfFunctionCall = State.Column;
@@ -1257,8 +1316,10 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
   unsigned LastSpace = State.Stack.back().LastSpace;
   bool AvoidBinPacking;
   bool BreakBeforeParameter = false;
-  unsigned NestedBlockIndent = std::max(State.Stack.back().StartOfFunctionCall,
-                                        State.Stack.back().NestedBlockIndent);
+  unsigned NestedBlockIndent = State.Stack.back().NestedBlockIndent;
+  if (!Style.UseThinkCellStyle)
+    NestedBlockIndent =
+        std::max(State.Stack.back().StartOfFunctionCall, NestedBlockIndent);
   if (Current.isOneOf(tok::l_brace, TT_ArrayInitializerLSquare) ||
       opensProtoMessageField(Current, Style)) {
     if (Current.opensBlockOrBlockTypeList(Style)) {
@@ -1282,9 +1343,12 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
     if (Current.ParameterCount > 1)
       NestedBlockIndent = std::max(NestedBlockIndent, State.Column + 1);
   } else {
-    NewIndent = Style.ContinuationIndentWidth +
-                std::max(State.Stack.back().LastSpace,
-                         State.Stack.back().StartOfFunctionCall);
+    if (Style.UseThinkCellStyle)
+      NewIndent = Style.ContinuationIndentWidth + State.Stack.back().LastSpace;
+    else
+      NewIndent = Style.ContinuationIndentWidth +
+                  std::max(State.Stack.back().LastSpace,
+                           State.Stack.back().StartOfFunctionCall);
 
     // Ensure that different different brackets force relative alignment, e.g.:
     // void SomeFunction(vector<  // break

@@ -124,7 +124,11 @@ private:
       // operator that was misinterpreted because we are parsing template
       // parameters.
       // FIXME: This is getting out of hand, write a decent parser.
-      if (CurrentToken->Previous->isOneOf(tok::pipepipe, tok::ampamp) &&
+      if (
+          // With think-cell style only < is used for comparison, so
+          // a < b && c > d cannot occur.
+          !Style.UseThinkCellStyle &&
+          CurrentToken->Previous->isOneOf(tok::pipepipe, tok::ampamp) &&
           CurrentToken->Previous->is(TT_BinaryOperator) &&
           Contexts[Contexts.size() - 2].IsExpression &&
           !Line.startsWith(tok::kw_template))
@@ -2979,6 +2983,10 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
       return true;
   }
 
+  if (Style.UseThinkCellStyle && Right.is(tok::l_brace)) {
+    return true;
+  }
+
   if (Left.is(tok::at))
     return false;
   if (Left.Tok.getObjCKeywordID() == tok::objc_interface)
@@ -3046,7 +3054,10 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return false;
   if (Left.is(TT_TemplateCloser) && Right.is(TT_TemplateOpener))
     return true;
-  if (Left.isOneOf(TT_TemplateCloser, TT_UnaryOperator) ||
+  if (Left.is(TT_UnaryOperator) ||
+      // Don't dissallow breaking after TT_TemplateCloser when using ThinkCell
+      // style
+      (!Style.UseThinkCellStyle && Left.is(TT_TemplateCloser)) ||
       Left.is(tok::kw_operator))
     return false;
   if (Left.is(tok::equal) && !Right.isOneOf(tok::kw_default, tok::kw_delete) &&
@@ -3054,14 +3065,15 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return false;
   if (Left.is(tok::l_paren) && Left.is(TT_AttributeParen))
     return false;
-  if (Left.is(tok::l_paren) && Left.Previous &&
+  if (!Style.UseThinkCellStyle && Left.is(tok::l_paren) && Left.Previous &&
       (Left.Previous->isOneOf(TT_BinaryOperator, TT_CastRParen)))
     return false;
   if (Right.is(TT_ImplicitStringLiteral))
     return false;
 
-  if (Right.is(tok::r_paren) || Right.is(TT_TemplateCloser))
-    return false;
+  if (Right.isOneOf(tok::r_paren, TT_TemplateCloser))
+    return Style.UseThinkCellStyle;
+
   if (Right.is(tok::r_square) && Right.MatchingParen &&
       Right.MatchingParen->is(TT_LambdaLSquare))
     return false;
