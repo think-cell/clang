@@ -3007,6 +3007,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return false;
   if (Right.is(TT_ConditionalExpr) || Right.is(tok::question))
     return Style.BreakBeforeTernaryOperators;
+  if (Left.is(tok::question) && Right.is(TT_LambdaLSquare))
+    return true;
   if (Left.is(TT_ConditionalExpr) || Left.is(tok::question))
     return !Style.BreakBeforeTernaryOperators;
   if (Right.is(TT_InheritanceColon))

@@ -4682,6 +4682,14 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
       "aaaaaa = aaaaaaaaaaaa ? aaaaaaaaaa ? aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
       "                                   : aaaaaaaaaaaaaaaaaaaaaa\n"
       "                      : aaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
+  verifyFormat(
+      "aaaaaa = aaaaaaaaaaaa ?\n"
+      "                      [&]() { //\n"
+      "                        return true;\n"
+      "                      }()\n"
+      "                          ? aaaaaaaaaaaa\n"
+      "                          : aaaaaaaaaaaaaaaaaaa\n"
+      "                      : aaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
 
   FormatStyle NoBinPacking = getLLVMStyle();
   NoBinPacking.BinPackArguments = false;
