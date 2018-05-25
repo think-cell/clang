@@ -11535,6 +11535,34 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     "HRERR(tc::com_ptr<Office::IRibbonControl>{ iRibbonControl }->get_Tag(&bstr));\n",
     Style);
 
+  verifyFormat(
+    "std::pair<\n"
+    "	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,\n"
+    "	BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\n"
+    "> ccccccccccccccccccccccccc::EEEEEEEEEEEEEEEEEEEEE(\n"
+    "	int iItem\n"
+    ") & noexcept {\n"
+    "	return Result;\n"
+    "}\n",
+    Style);
+
+  verifyFormat(
+    "cppcoro::task<> SendResponseTask(\n"
+    "	AAAAAAAAAAAAAAAAAAAAAAA,\n"
+    "	BBBBBBBBBBBBBBBBBBBBBBB,\n"
+    "	CCCCCCCCCCCCCCCCCCCCCCC,\n"
+    "	EEEEEEEEEEEEEEEEEEEEEEE\n"
+    ") const& THROW(\n"
+    "	AAAAAAAAAAAAAAAAAAAAAAA,\n"
+    "	BBBBBBBBBBBBBBBBBBBBBBB,\n"
+    "	CCCCCCCCCCCCCCCCCCCCCCC,\n"
+    "	EEEEEEEEEEEEEEEEEEEEEEE\n"
+    ") {\n"
+    "	Function1();\n"
+    "	return 2;\n"
+    "}\n",
+    Style);
+
   Style.ColumnLimit = 15;
   verifyFormat(
     "if (\n"

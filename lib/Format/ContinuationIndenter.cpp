@@ -293,7 +293,8 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
   //   SomeParameter, OtherParameter).DoSomething(
   //   ...
   // As they hide "DoSomething" and are generally bad for readability.
-  if (Previous.opensScope() && Previous.isNot(tok::l_brace) &&
+  if (!Style.UseThinkCellStyle && Previous.opensScope() &&
+      Previous.isNot(tok::l_brace) &&
       State.LowestLevelOnLine < State.StartOfLineLevel &&
       State.LowestLevelOnLine < Current.NestingLevel)
     return false;
