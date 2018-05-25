@@ -449,7 +449,7 @@ void UnwrappedLineParser::calculateBraceTypes(bool ExpectClassBody) {
               (Style.isCpp() && NextTok->is(tok::l_paren)) ||
               NextTok->isOneOf(tok::comma, tok::period, tok::colon,
                                tok::r_paren, tok::r_square, tok::l_brace,
-                               tok::ellipsis) ||
+                               tok::ellipsis, tok::arrow) ||
               (NextTok->is(tok::identifier) &&
                !PrevTok->isOneOf(tok::semi, tok::r_brace, tok::l_brace)) ||
               (NextTok->is(tok::semi) &&

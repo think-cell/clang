@@ -11531,6 +11531,10 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     "}\n",
     Style);
 
+  verifyFormat(
+    "HRERR(tc::com_ptr<Office::IRibbonControl>{ iRibbonControl }->get_Tag(&bstr));\n",
+    Style);
+
   Style.ColumnLimit = 15;
   verifyFormat(
     "if (\n"
