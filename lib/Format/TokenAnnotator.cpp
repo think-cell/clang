@@ -1377,7 +1377,7 @@ private:
       // colon after this, this is the only place which annotates the identifier
       // as a selector.)
       Current.Type = TT_SelectorName;
-    } else if (Current.isOneOf(tok::identifier, tok::kw_const) &&
+    } else if (Current.isOneOf(tok::identifier, tok::kw_const, tok::kw_noexcept) &&
                Current.Previous &&
                !Current.Previous->isOneOf(tok::equal, tok::at) &&
                Line.MightBeFunctionDecl && Contexts.size() == 1) {
@@ -2236,6 +2236,10 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 500;
   if (Left.isOneOf(tok::kw_class, tok::kw_struct))
     return 5000;
+  if (Style.UseThinkCellStyle &&
+      (Right.is(TT_TrailingAnnotation) ||
+       (Right.is(tok::amp) && Left.is(tok::r_paren) && InFunctionDecl)))
+    return 10000;
   if (Left.is(tok::comment))
     return 1000;
 
@@ -2267,11 +2271,6 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
                ? 150
                : 35;
   }
-
-  if (Style.UseThinkCellStyle &&
-      (Right.is(TT_TrailingAnnotation) ||
-       (Right.is(tok::amp) && Left.is(tok::r_paren) && InFunctionDecl)))
-    return 500;
 
   if (Right.is(TT_TrailingAnnotation) &&
       (!Right.Next || Right.Next->isNot(tok::l_paren))) {

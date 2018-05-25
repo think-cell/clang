@@ -11412,6 +11412,47 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     Style);
 
   verifyFormat(
+    "SHODIMP CP(\n"
+    "	IDispatch* /*iRibbonControl*/,\n"
+    "	VARIANT_BOOL /*bPressed*/\n"
+    ") /* no & */ noexcept {}\n",
+    "SHODIMP CP(IDispatch* /*iRibbonControl*/, VARIANT_BOOL /*bPressed*/) "
+    "/* no & */ noexcept {}\n",
+    Style);
+
+  verifyFormat(
+    "SHODIMP CP(IDispatch* /*iRibbonControl*/, VARIANT_BOOL /*bPressed*/) "
+    "/* no & */ const {\n}\n",
+    "SHODIMP CP(IDispatch* /*iRibbonControl*/, VARIANT_BOOL /*bPressed*/) "
+    "/* no & */ const {}\n",
+    Style);
+
+  verifyFormat(
+    "SHODIMP CP(IDispatch* /*iRibbonControl*/, VARIANT_BOOL /*bPressed*/) "
+    "const& noexcept {\n}\n",
+    "SHODIMP CP(IDispatch* /*iRibbonControl*/, VARIANT_BOOL /*bPressed*/) "
+    "const& noexcept {}\n",
+    Style);
+
+  verifyFormat(
+    "SHODIMP CP(\n"
+    "	IDispatch* /*iRibbonControl*/,\n"
+    "	VARIANT_BOOL /*bPressed*/\n"
+    ") /* no & */ THROW(tc::file_failure) {}\n",
+    "SHODIMP CP(IDispatch* /*iRibbonControl*/, VARIANT_BOOL /*bPressed*/) "
+    "/* no & */ THROW(tc::file_failure) {}\n",
+    Style);
+
+  verifyFormat(
+    "SHODIMP CP(\n"
+    "	IDispatch* /*iRibbonControl*/,\n"
+    "	VARIANT_BOOL /*bPressed*/\n"
+    ") /* no & */ noexcept {}\n",
+    "SHODIMP CP(IDispatch* /*iRibbonControl*/, VARIANT_BOOL /*bPressed*/) "
+    "/* no & */ noexcept {}\n",
+    Style);
+
+  verifyFormat(
     "HRERR(\n"
     "	NOEXCEPT(\n"
     "		PpApplication()\n"
