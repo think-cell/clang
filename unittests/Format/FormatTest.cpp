@@ -11524,6 +11524,13 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     "};\n",
     Style);
 
+  verifyFormat(
+    "if (SMessageEntry msgentry{\n"
+    "	bDispatchActionsFromQueue && true\n"
+    "}) { // AAAAAAAAAAAAAAAAA\n"
+    "}\n",
+    Style);
+
   Style.ColumnLimit = 15;
   verifyFormat(
     "if (\n"

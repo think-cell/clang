@@ -2989,7 +2989,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
       return true;
   }
 
-  if (Style.UseThinkCellStyle && Right.is(tok::l_brace)) {
+  if (Style.UseThinkCellStyle && Right.is(tok::l_brace) &&
+      Right.BlockKind == BK_Block) {
     return true;
   }
 
