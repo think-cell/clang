@@ -1496,11 +1496,7 @@ public:
           SmallVectorImpl<AnnotatedLine *> &AnnotatedLines,
           FormatTokenLexer &Tokens) override {
     assert(Style.Language == FormatStyle::LK_Cpp);
-    // With think-cell style assume it's always C++.
-    // This is a hack, as in some cases guessIsObjC hangs on .h files.
-    IsObjC = Style.UseThinkCellStyle
-                 ? false
-                 : guessIsObjC(AnnotatedLines, Tokens.getKeywords());
+    IsObjC = guessIsObjC(AnnotatedLines, Tokens.getKeywords());
     tooling::Replacements Result;
     return {Result, 0};
   }
@@ -1602,9 +1598,9 @@ private:
                                TT_ObjCMethodSpecifier, TT_ObjCProperty)) {
           return true;
         }
-        if (guessIsObjC(Line->Children, Keywords))
-          return true;
       }
+      if (guessIsObjC(Line->Children, Keywords))
+        return true;
     }
     return false;
   }
