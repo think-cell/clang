@@ -11563,6 +11563,35 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     "}\n",
     Style);
 
+  verifyFormat(
+    "template<\n"
+    "	typename T\n"
+    "#ifndef __EMSCRIPTEN__\n"
+    "	, AAA\n"
+    "#endif\n"
+    ">\n"
+    "void f();\n",
+    Style);
+
+  verifyFormat(
+    "void f(\n"
+    "	int x\n"
+    "#ifdef A\n"
+    "	, int y\n"
+    "#endif\n"
+    ");\n",
+    Style);
+
+  verifyFormat(
+    "Something(\n"
+    "	aaa,\n"
+    "	bbb\n"
+    "#ifdef A\n"
+    "	, ccc\n"
+    "#endif\n"
+    ");\n",
+    Style);
+
   Style.ColumnLimit = 15;
   verifyFormat(
     "if (\n"

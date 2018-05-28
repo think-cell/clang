@@ -366,7 +366,9 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       Current.startsSequence(TT_SelectorName, tok::colon, tok::caret)) {
     return true;
   }
-  if ((startsNextParameter(Current, Style) || Previous.is(tok::semi) ||
+  if (((startsNextParameter(Current, Style) &&
+        !(Previous.is(tok::comma) && Previous.MustBreakBefore)) ||
+       Previous.is(tok::semi) ||
        (Previous.is(TT_TemplateCloser) && Current.is(TT_StartOfName) &&
         Style.isCpp() &&
         // FIXME: This is a temporary workaround for the case where clang-format
