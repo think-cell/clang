@@ -11592,6 +11592,17 @@ TEST_F(FormatTest, FormatsWithThinkCellStyle) {
     ");\n",
     Style);
 
+  verifyFormat(
+    "int a[] = {\n"
+    "	20, //\n"
+    "	40\n"
+    "};\n",
+    Style);
+
+  verifyFormat(
+    "int a[] = { 20, 40 };\n",
+    Style);
+
   Style.ColumnLimit = 15;
   verifyFormat(
     "if (\n"
