@@ -472,6 +472,30 @@ TEST_F(FormatTestComments, UnderstandsBlockComments) {
                      "  int jjj; /*b*/");
 }
 
+TEST_F(FormatTestComments, BlockCommentsWithCLRF) {
+  EXPECT_EQ("/*\r\n"
+            " * Comment with\r\n"
+            "\r\n"
+            " * blanks.\r\n"
+            " */\r\n"
+            "void f() {}",
+            format("/* \r\n"
+                    " * Comment with\r\n"
+                    "     \r\n"
+                    " * blanks.\r\n"
+                    " */\r\n"
+                    "void f() {}"));
+  EXPECT_EQ("#define A(x) /* \\\r\n"
+            "  a comment     \\\r\n"
+            "  inside */     \\\r\n"
+            "  f();",
+            format("#define A(x) /* \\\r\n"
+                   "  a comment     \\\r\n"
+                   "  inside */     \\\r\n"
+                   "  f();",
+                   getLLVMStyleWithColumns(17)));
+}
+
 TEST_F(FormatTestComments, AlignsBlockComments) {
   EXPECT_EQ("/*\n"
             " * Really multi-line\n"
